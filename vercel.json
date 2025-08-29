@@ -1,27 +1,8 @@
 {
   "functions": {
-    "api/search-stocks.py": {
-      "runtime": "python3.9"
-    },
-    "api/realtime-quotes.py": {
-      "runtime": "python3.9"
-    },
-    "api/screen.py": {
-      "runtime": "python3.9"
+    "api/**/*.py": {
+      "runtime": "python3.9",
+      "maxDuration": 30
     }
-  },
-  "builds": [
-    {
-      "src": "api/search-stocks.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "api/realtime-quotes.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "api/screen.py",
-      "use": "@vercel/python"
-    }
-  ]
+  }
 }
