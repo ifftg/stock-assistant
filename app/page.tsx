@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { TrendingUp, TrendingDown, Search, Star, BarChart3, Newspaper, Brain, AlertTriangle, RefreshCw, Activity, Zap, Target, Briefcase } from 'lucide-react'
-import { AuthModal } from '@/components/auth/AuthModal'
-import { UserAvatar } from '@/components/auth/UserAvatar'
 
 // 数据类型定义
 interface Stock {
@@ -46,7 +44,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [hasTestData, setHasTestData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [showAuthModal, setShowAuthModal] = useState(false)
 
   // 获取股票数据
   const fetchStocks = async () => {
@@ -143,11 +140,6 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8">
           {/* 页面标题 - 科技感设计 */}
           <div className="text-center mb-12 relative">
-            {/* 用户头像 - 右上角 */}
-            <div className="absolute top-0 right-0">
-              <UserAvatar onLoginClick={() => setShowAuthModal(true)} />
-            </div>
-
             <h1 className="hero-title mb-4">
               智能股票分析平台
             </h1>
@@ -363,11 +355,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 认证模态框 */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
+
     </div>
   )
 }

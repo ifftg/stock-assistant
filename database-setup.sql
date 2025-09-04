@@ -1,15 +1,32 @@
 -- 数据库表关系建立和初始化数据脚本
--- 请在Supabase SQL Editor中执行此脚本
+-- 请分步执行，避免网络超时
 
--- 1. 首先确保stocks_info表有主键约束
-ALTER TABLE public.stocks_info 
-ADD CONSTRAINT stocks_info_pkey PRIMARY KEY (ticker);
+-- 步骤1: 添加主键约束（如果不存在）
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'stocks_info_pkey'
+        AND table_name = 'stocks_info'
+    ) THEN
+        ALTER TABLE public.stocks_info ADD CONSTRAINT stocks_info_pkey PRIMARY KEY (ticker);
+    END IF;
+END $$;
 
--- 2. 建立stocks_daily到stocks_info的外键关系
-ALTER TABLE public.stocks_daily 
-ADD CONSTRAINT stocks_daily_ticker_fkey 
-FOREIGN KEY (ticker) REFERENCES public.stocks_info(ticker) 
-ON DELETE CASCADE;
+-- 步骤2: 添加外键关系（如果不存在）
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'stocks_daily_ticker_fkey'
+        AND table_name = 'stocks_daily'
+    ) THEN
+        ALTER TABLE public.stocks_daily
+        ADD CONSTRAINT stocks_daily_ticker_fkey
+        FOREIGN KEY (ticker) REFERENCES public.stocks_info(ticker)
+        ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- 3. 建立concept_sectors到stocks_info的外键关系（如果需要）
 -- ALTER TABLE public.concept_sectors 

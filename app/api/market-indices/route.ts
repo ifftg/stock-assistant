@@ -4,6 +4,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic'
+
 // 创建Supabase客户端
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
