@@ -24,5 +24,11 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "ai-analysis-edge-function.ts",
+    "stock-data-edge-function.ts",
+    "simple-ai-analysis.ts",
+    "supabase-edge-functions/**"
+  ]
 }
