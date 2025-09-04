@@ -52,3 +52,13 @@ stock-assistant.md
 *.key
 *.pem
 *.p12
+
+# 文档文件（包含中文字符的文件可能导致部署问题）
+# 注意：保护重要的PRD文档，不要删除
+# *（*）*.md
+# *：*.md
+
+# 临时文件
+supabase-*-function.ts
+ui-components/
+supabase-edge-functions/
