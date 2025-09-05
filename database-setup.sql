@@ -1,19 +1,55 @@
 -- 数据库表关系建立和初始化数据脚本
--- 请分步执行，避免网络超时
+-- 请按顺序分步执行
 
--- 步骤1: 添加主键约束（如果不存在）
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'stocks_info_pkey'
-        AND table_name = 'stocks_info'
-    ) THEN
-        ALTER TABLE public.stocks_info ADD CONSTRAINT stocks_info_pkey PRIMARY KEY (ticker);
-    END IF;
-END $$;
+-- 步骤1: 检查并创建market_indices表
+CREATE TABLE IF NOT EXISTS public.market_indices (
+    id SERIAL PRIMARY KEY,
+    index_code VARCHAR(20) NOT NULL UNIQUE,
+    index_name VARCHAR(100) NOT NULL,
+    current_price DECIMAL(10,2),
+    change_amount DECIMAL(10,2),
+    change_percent DECIMAL(5,2),
+    volume BIGINT,
+    turnover DECIMAL(15,2),
+    data_source VARCHAR(20) DEFAULT 'API',
+    is_test_data BOOLEAN DEFAULT false,
+    update_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
--- 步骤2: 添加外键关系（如果不存在）
+-- 步骤2: 检查并创建stocks_info表
+CREATE TABLE IF NOT EXISTS public.stocks_info (
+    ticker VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    market VARCHAR(20),
+    industry VARCHAR(50),
+    data_source VARCHAR(20) DEFAULT 'API',
+    is_test_data BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 步骤3: 检查并创建stocks_daily表
+CREATE TABLE IF NOT EXISTS public.stocks_daily (
+    id SERIAL PRIMARY KEY,
+    ticker VARCHAR(20) NOT NULL,
+    trade_date DATE NOT NULL,
+    open_price DECIMAL(10,2),
+    close_price DECIMAL(10,2),
+    high_price DECIMAL(10,2),
+    low_price DECIMAL(10,2),
+    volume BIGINT,
+    turnover DECIMAL(15,2),
+    pe_ratio DECIMAL(8,2),
+    pb_ratio DECIMAL(8,2),
+    market_cap DECIMAL(15,2),
+    data_source VARCHAR(20) DEFAULT 'API',
+    is_test_data BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(ticker, trade_date)
+);
+
+-- 步骤4: 添加外键关系（如果不存在）
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -65,15 +101,15 @@ INSERT INTO public.stocks_daily (
 ('600887', '2024-01-15', 28.90, 29.45, 29.80, 28.75, 45000000, 1320000000, 18.7, 3.2, 189000000000, 'TEST', true);
 
 -- 7. 插入市场指数测试数据
-INSERT INTO public.market_indices (code, name, price, change_amount, change_percent, data_source, is_test_data) VALUES
+INSERT INTO public.market_indices (index_code, index_name, current_price, change_amount, change_percent, data_source, is_test_data) VALUES
 ('000001', '上证指数', 3156.48, 15.32, 0.49, 'TEST', true),
 ('399001', '深证成指', 10245.67, -28.45, -0.28, 'TEST', true),
 ('399006', '创业板指', 2089.34, 12.78, 0.62, 'TEST', true)
-ON CONFLICT (code) DO UPDATE SET
-  price = EXCLUDED.price,
+ON CONFLICT (index_code) DO UPDATE SET
+  current_price = EXCLUDED.current_price,
   change_amount = EXCLUDED.change_amount,
   change_percent = EXCLUDED.change_percent,
-  updated_at = NOW();
+  update_time = CURRENT_TIMESTAMP;
 
 -- 8. 设置RLS策略（行级安全）- 允许匿名用户读取
 ALTER TABLE public.stocks_info ENABLE ROW LEVEL SECURITY;
