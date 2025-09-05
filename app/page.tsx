@@ -243,34 +243,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* 功能导航 - 五板块架构 */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-12">
-            <Button className="glass-card glow-button h-24 flex flex-col items-center justify-center space-y-2 group">
-              <Activity className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <span className="font-medium">市场行情</span>
-              <span className="text-xs opacity-80">实时数据</span>
-            </Button>
-            <Button variant="outline" className="glass-card glow-border h-24 flex flex-col items-center justify-center space-y-2 group hover:bg-primary/10">
-              <Target className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <span className="font-medium">策略选股</span>
-              <span className="text-xs opacity-80">智能筛选</span>
-            </Button>
-            <Button variant="outline" className="glass-card glow-border h-24 flex flex-col items-center justify-center space-y-2 group hover:bg-primary/10">
-              <Brain className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <span className="font-medium">AI分析</span>
-              <span className="text-xs opacity-80">深度解读</span>
-            </Button>
-            <Button variant="outline" className="glass-card glow-border h-24 flex flex-col items-center justify-center space-y-2 group hover:bg-primary/10">
-              <BarChart3 className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <span className="font-medium">量化工作台</span>
-              <span className="text-xs opacity-80">专业回测</span>
-            </Button>
-            <Button variant="outline" className="glass-card h-24 flex flex-col items-center justify-center space-y-2 opacity-50 cursor-not-allowed">
-              <Briefcase className="h-8 w-8" />
-              <span className="font-medium">交易系统</span>
-              <span className="text-xs">即将开放</span>
-            </Button>
-          </div>
+
 
           {/* 股票列表 - 科技感设计 */}
           <Card className="glass-card">
