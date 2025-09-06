@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// 创建Supabase客户端
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-// 通用的股票筛选函数
+// 通用的股票筛选函数（在函数内创建客户端，避免构建期执行）
 async function getStocksWithCriteria(criteria: any) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !supabaseKey) {
+      return { data: null, error: new Error('Supabase环境变量未配置') }
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey)
     // 简化版：直接获取测试数据
     const { data: stocks, error } = await supabase
       .from('stocks_info')

@@ -7,14 +7,20 @@ import { NextRequest, NextResponse } from 'next/server'
 // 强制动态渲染
 export const dynamic = 'force-dynamic'
 
-// 创建Supabase客户端
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 // GET /api/stocks - 获取股票列表
 export async function GET(request: NextRequest) {
+  // 在请求作用域内创建 Supabase 客户端，避免构建期缺失环境变量导致失败
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json(
+      { error: '服务未正确配置（缺少 Supabase 环境变量）' },
+      { status: 500 }
+    )
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
