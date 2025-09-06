@@ -219,8 +219,9 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('策略筛选失败:', error)
+      const message = (error as any)?.message || (typeof error === 'string' ? error : JSON.stringify(error))
       return NextResponse.json(
-        { error: '策略筛选失败', details: error.message },
+        { error: '策略筛选失败', details: message },
         { status: 500 }
       )
     }
