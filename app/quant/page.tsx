@@ -6,7 +6,7 @@ export default function QuantPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">
-            ⚡ 量化工作台
+            量化工作台
           </h1>
           <p className="text-xl text-gray-300">
             专业回测平台 · 策略验证工具
@@ -93,7 +93,7 @@ export default function QuantPage() {
               <h3 className="text-xl font-semibold text-white mb-4">K线图表</h3>
               <div className="flex items-center justify-center h-full text-gray-400">
                 <div className="text-center">
-                  <div className="text-6xl mb-4">📈</div>
+                  <div className="text-3xl mb-4 font-bold text-green-400">K线图表</div>
                   <p>K线图表将在这里显示</p>
                   <p className="text-sm mt-2">请配置策略参数后开始回测</p>
                 </div>
@@ -139,7 +139,7 @@ export default function QuantPage() {
         <div className="mt-6 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
           <h3 className="text-xl font-semibold text-white mb-4">交易信号</h3>
           <div className="text-center text-gray-400 py-8">
-            <div className="text-4xl mb-4">📊</div>
+            <div className="text-2xl mb-4 font-bold text-purple-400">交易信号</div>
             <p>交易信号时间轴将在回测完成后显示</p>
           </div>
         </div>

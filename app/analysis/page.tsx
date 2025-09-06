@@ -6,7 +6,7 @@ export default function AnalysisPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">
-            🔍 个股AI分析
+            个股AI分析
           </h1>
           <p className="text-xl text-gray-300">
             智能分析工具 · AI驱动决策
@@ -62,7 +62,7 @@ export default function AnalysisPage() {
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 mb-6">
               <h3 className="text-xl font-semibold text-white mb-4">AI智能分析</h3>
               <div className="text-center text-gray-400 py-12">
-                <div className="text-6xl mb-4">🤖</div>
+                <div className="text-3xl mb-4 font-bold text-blue-400">AI 分析</div>
                 <p className="text-lg mb-2">请选择股票开始AI分析</p>
                 <p className="text-sm">今日剩余分析次数：5次</p>
               </div>
