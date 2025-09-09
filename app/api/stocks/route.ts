@@ -52,6 +52,10 @@ export async function GET(request: NextRequest) {
           is_test_data
         )
       `)
+      // 确保嵌套的 stocks_daily 取到最新一条（按交易日倒序并限制为1行）
+      .order('trade_date', { foreignTable: 'stocks_daily', ascending: false })
+      .limit(1, { foreignTable: 'stocks_daily' })
+      // 主表按创建时间倒序，仅取前 N 条
       .order('created_at', { ascending: false })
       .limit(limit)
 
