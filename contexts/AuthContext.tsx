@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase, User, AuthState } from '@/lib/supabase'
+import { getSupabaseBrowser, User, AuthState } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
 
 interface AuthContextType extends AuthState {
@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // 获取初始会话
     const getInitialSession = async () => {
+      const supabase = getSupabaseBrowser()
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
       setLoading(false)
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     // 监听认证状态变化
+    const supabase = getSupabaseBrowser()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null)
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    const supabase = getSupabaseBrowser()
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -47,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    const supabase = getSupabaseBrowser()
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -60,10 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    const supabase = getSupabaseBrowser()
     await supabase.auth.signOut()
   }
 
   const resetPassword = async (email: string) => {
+    const supabase = getSupabaseBrowser()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })
