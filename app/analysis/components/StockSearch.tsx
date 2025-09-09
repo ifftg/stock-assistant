@@ -22,6 +22,8 @@ export default function StockSearch({ onStockSelect, selectedStock }: StockSearc
   const [filteredStocks, setFilteredStocks] = useState<Stock[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [analysisText, setAnalysisText] = useState<string>('')
+  const [analysisError, setAnalysisError] = useState<string>('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // 获取股票列表
@@ -97,16 +99,43 @@ export default function StockSearch({ onStockSelect, selectedStock }: StockSearc
     onStockSelect(stock)
   }
 
-  const handleAnalyze = () => {
-    if (selectedStock) {
-      // 触发分析
-      console.log('开始分析股票:', selectedStock)
-      // 这里可以调用分析 API 或触发父组件的分析函数
+  const handleAnalyze = async () => {
+    if (!selectedStock) return
+    setLoading(true)
+    setAnalysisError('')
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (!supabaseUrl || !anon) {
+        setAnalysisError('缺少 Supabase 环境变量配置')
+        return
+      }
+      const res = await fetch(`${supabaseUrl}/functions/v1/ai-analysis`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anon,
+          'Authorization': `Bearer ${anon}`,
+        },
+        body: JSON.stringify({ ticker: selectedStock.ticker, analysis_type: 'comprehensive' })
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setAnalysisError(json?.error || 'AI分析服务错误')
+        return
+      }
+      // 兼容不同返回结构
+      const text = json?.data || json?.analysis || JSON.stringify(json)
+      setAnalysisText(typeof text === 'string' ? text : JSON.stringify(text))
+    } catch (e:any) {
+      setAnalysisError(e?.message || String(e))
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 mb-6">
+    <div className="relative z-[200] bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 mb-6">
       <h3 className="text-xl font-semibold text-white mb-4">股票搜索</h3>
       <div className="space-y-4" ref={dropdownRef}>
         <div className="relative">
@@ -121,7 +150,7 @@ export default function StockSearch({ onStockSelect, selectedStock }: StockSearc
           
           {/* 下拉菜单 */}
           {showDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800/95 backdrop-blur-md border border-white/20 rounded-xl max-h-60 overflow-y-auto z-50">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800/95 backdrop-blur-md border border-white/20 rounded-xl max-h-60 overflow-y-auto z-[999] shadow-xl">
               {filteredStocks.map((stock) => (
                 <div
                   key={stock.ticker}
@@ -146,14 +175,25 @@ export default function StockSearch({ onStockSelect, selectedStock }: StockSearc
           )}
         </div>
         
-        <button 
+        <button
           onClick={handleAnalyze}
           disabled={!selectedStock || loading}
           className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? '加载中...' : selectedStock ? `分析 ${selectedStock.name}` : '搜索分析'}
         </button>
-        
+
+        {/* 分析结果 / 错误信息（简易展示）*/}
+        {(analysisText || analysisError) && (
+          <div className="mt-3 p-3 rounded-xl text-sm whitespace-pre-wrap border bg-white/5 border-white/10">
+            {analysisError ? (
+              <div className="text-red-300">{analysisError}</div>
+            ) : (
+              <div className="text-gray-200">{analysisText}</div>
+            )}
+          </div>
+        )}
+
         {/* 当前选中的股票信息 */}
         {selectedStock && (
           <div className="mt-4 p-3 bg-white/5 rounded-xl">
