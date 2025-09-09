@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { TrendingUp, TrendingDown, Search, Star, BarChart3, Newspaper, Brain, AlertTriangle, RefreshCw, Activity, Zap, Target, Briefcase } from 'lucide-react'
 
+import Link from 'next/link'
 // 数据类型定义
 interface Stock {
   ticker: string
@@ -50,7 +51,7 @@ export default function HomePage() {
     try {
       const response = await fetch('/api/stocks?includeTestData=true&limit=10')
       const result = await response.json()
-      
+
       if (result.success) {
         setStocks(result.data)
         setHasTestData(result.meta.hasTestData)
@@ -68,7 +69,7 @@ export default function HomePage() {
     try {
       const response = await fetch('/api/market-indices?includeTestData=true')
       const result = await response.json()
-      
+
       if (result.success) {
         setIndices(result.data)
       } else {
@@ -87,7 +88,7 @@ export default function HomePage() {
       await Promise.all([fetchStocks(), fetchIndices()])
       setLoading(false)
     }
-    
+
     loadData()
   }, [])
 
@@ -99,7 +100,7 @@ export default function HomePage() {
   }
 
   // 过滤股票
-  const filteredStocks = stocks.filter(stock => 
+  const filteredStocks = stocks.filter(stock =>
     stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     stock.ticker.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -159,6 +160,12 @@ export default function HomePage() {
                 <Zap className="h-4 w-4 text-primary" />
                 <span>毫秒响应</span>
               </div>
+
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Link href="/login" className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition">登录</Link>
+              <Link href="/signup" className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">注册</Link>
+            </div>
+
             </div>
           </div>
 
