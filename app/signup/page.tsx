@@ -12,6 +12,8 @@ export default function SignupPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -21,6 +23,20 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     setInfo(null)
+
+    // 验证密码
+    if (password.length < 6) {
+      setError("密码长度至少6位")
+      setLoading(false)
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError("两次输入的密码不一致")
+      setLoading(false)
+      return
+    }
+
     try {
       const supabase = getSupabaseBrowser()
       const { error } = await supabase.auth.signUp({ email, password })
@@ -54,14 +70,36 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <label className="block text-gray-300 text-sm mb-2">密码</label>
+            <label className="block text-gray-300 text-sm mb-2">密码（至少6位）</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-12 text-white focus:outline-none focus:border-blue-400"
+                placeholder="••••••••"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-gray-300 text-sm mb-2">确认密码</label>
             <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400"
               placeholder="••••••••"
               required
+              minLength={6}
             />
           </div>
           {error && <div className="text-sm text-red-400">{error}</div>}
