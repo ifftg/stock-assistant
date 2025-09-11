@@ -28,7 +28,8 @@ async function getStocksWithCriteria(criteria: any, limit: number = 200) {
           turnover,
           pe_ratio,
           pb_ratio,
-          market_cap
+          market_cap,
+          prev_close
         )
       `)
       .order('trade_date', { foreignTable: 'stocks_daily', ascending: false })
@@ -224,8 +225,8 @@ export async function GET(request: NextRequest) {
     // 处理数据格式
     const processedStocks = stocks?.map(stock => {
       const dailyData = stock.stocks_daily[0] // 获取最新的日线数据
-      const changePercent = dailyData && dailyData.close_price && dailyData.open_price ? 
-        ((dailyData.close_price - dailyData.open_price) / dailyData.open_price * 100) : 0
+      const ref = (dailyData && dailyData.prev_close && dailyData.prev_close > 0) ? dailyData.prev_close : dailyData?.open_price
+      const changePercent = dailyData && ref ? ((dailyData.close_price - ref) / ref * 100) : 0
 
       return {
         ticker: stock.ticker,

@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-// 获取真实财经新闻的函数
-async function fetchRealFinancialNews(limit: number = 10) {
-  try {
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    
-    const realNews = [
+// 直接从 Supabase news 表读取最新新闻
+async function fetchLatestNewsFromDB(limit: number = 10, category?: string | null) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseKey) return { data: [], error: '缺少 Supabase 环境变量' }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
+  let q = supabase
+    .from('news')
+    .select('*')
+    .order('publish_time', { ascending: false })
+    .limit(limit)
+
+  if (category) q = q.eq('category', category)
+
+  const { data, error } = await q
+  if (error) return { data: [], error: error.message }
+  return { data: data || [], error: null }
+}
+
       {
         id: `real-${Date.now()}-1`,
         title: `${today} A股收盘：沪指涨0.8%，创业板指涨1.5%，新能源板块领涨`,
@@ -95,53 +109,19 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const category = searchParams.get('category')
 
-    // 获取真实新闻数据
-    const realNews = await fetchRealFinancialNews(limit)
-    
-    if (realNews.length > 0) {
-      // 根据category过滤
-      const filteredNews = category 
-        ? realNews.filter(item => item.category === category)
-        : realNews
-
-      return NextResponse.json({
-        success: true,
-        data: filteredNews.slice(0, limit),
-        meta: {
-          total: filteredNews.length,
-          isFromDatabase: false,
-          isRealTime: true,
-          message: '显示实时财经新闻数据'
-        }
-      })
+    // 从数据库读取最新新闻
+    const { data: news, error } = await fetchLatestNewsFromDB(limit, category)
+    if (error) {
+      return NextResponse.json({ error: '获取新闻失败', details: error }, { status: 500 })
     }
-
-    // 如果获取真实新闻失败，返回备用数据
-    const fallbackNews = [
-      {
-        id: 'fallback-1',
-        title: '暂无最新财经新闻数据',
-        summary: '系统正在获取最新的财经新闻，请稍后刷新页面查看。',
-        content: '当前新闻服务暂时不可用，我们正在努力恢复服务。',
-        source: '系统提示',
-        author: '系统',
-        published_at: new Date().toISOString(),
-        category: '系统消息',
-        tags: ['系统', '提示'],
-        url: '#',
-        image_url: null,
-        is_test_data: true
-      }
-    ]
 
     return NextResponse.json({
       success: true,
-      data: fallbackNews,
+      data: news,
       meta: {
-        total: fallbackNews.length,
-        isFromDatabase: false,
-        isRealTime: false,
-        message: '当前显示备用数据，请稍后刷新'
+        total: news.length,
+        isFromDatabase: true,
+        isRealTime: false
       }
     })
 

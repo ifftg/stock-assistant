@@ -100,7 +100,7 @@ ${priceHistory.map(p => `${p.date}: ¥${p.price} (${p.change}%)`).join('\n')}
 `
 
     // 4. 调用Gemini API进行分析
-    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey, {
+    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + geminiApiKey, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -62,7 +62,7 @@ export default function HomePage() {
   // 获取股票数据
   const fetchStocks = async () => {
     try {
-      const response = await fetch('/api/stocks?includeTestData=true&limit=10')
+      const response = await fetch('/api/stocks?includeTestData=false&limit=10')
       const result = await response.json()
 
       if (result.success) {
@@ -80,7 +80,7 @@ export default function HomePage() {
   // 获取市场指数数据
   const fetchIndices = async () => {
     try {
-      const response = await fetch('/api/market-indices?includeTestData=true')
+      const response = await fetch('/api/market-indices?includeTestData=false')
       const result = await response.json()
 
       if (result.success) {
