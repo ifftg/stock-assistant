@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navigationItems = [
   {
@@ -41,6 +42,7 @@ const navigationItems = [
 export default function Navigation() {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { user, loading, signOut } = useAuth()
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -51,6 +53,32 @@ export default function Navigation() {
 
   return (
     <>
+      {/* 右上角登录/注册按钮 */}
+      <div className="absolute top-4 right-4 z-50">
+        {loading ? (
+          <div className="animate-pulse bg-white/10 rounded-xl px-4 py-2 w-20 h-10"></div>
+        ) : user ? (
+          <div className="flex items-center space-x-3">
+            <span className="text-white text-sm">欢迎，{user.email}</span>
+            <button
+              onClick={signOut}
+              className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 transition"
+            >
+              退出
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-3">
+            <Link href="/login" className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition">
+              登录
+            </Link>
+            <Link href="/signup" className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">
+              注册
+            </Link>
+          </div>
+        )}
+      </div>
+
       {/* 桌面端五板块大导航 - 整行占满，超大按钮 */}
       <nav className="hidden md:block w-full max-w-7xl mx-auto">
         <div className="grid grid-cols-5 gap-4 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">

@@ -38,9 +38,22 @@ interface MarketIndex {
   updateTime: string
 }
 
+interface NewsItem {
+  id: number
+  title: string
+  summary: string
+  source: string
+  url: string
+  publish_time: string
+  category: string
+  importance_level: number
+  created_at: string
+}
+
 export default function HomePage() {
   const [stocks, setStocks] = useState<Stock[]>([])
   const [indices, setIndices] = useState<MarketIndex[]>([])
+  const [news, setNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasTestData, setHasTestData] = useState(false)
@@ -81,11 +94,27 @@ export default function HomePage() {
     }
   }
 
+  // 获取财经新闻数据
+  const fetchNews = async () => {
+    try {
+      const response = await fetch('/api/news?limit=5')
+      const result = await response.json()
+
+      if (result.success) {
+        setNews(result.data)
+      } else {
+        console.error('获取新闻失败:', result.error)
+      }
+    } catch (err) {
+      console.error('获取新闻失败:', err)
+    }
+  }
+
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await Promise.all([fetchStocks(), fetchIndices()])
+      await Promise.all([fetchStocks(), fetchIndices(), fetchNews()])
       setLoading(false)
     }
 
@@ -95,7 +124,7 @@ export default function HomePage() {
   // 刷新数据
   const handleRefresh = async () => {
     setLoading(true)
-    await Promise.all([fetchStocks(), fetchIndices()])
+    await Promise.all([fetchStocks(), fetchIndices(), fetchNews()])
     setLoading(false)
   }
 
@@ -161,10 +190,7 @@ export default function HomePage() {
                 <span>毫秒响应</span>
               </div>
 
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <Link href="/login" className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition">登录</Link>
-              <Link href="/signup" className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">注册</Link>
-            </div>
+
 
             </div>
           </div>
@@ -251,6 +277,58 @@ export default function HomePage() {
           </div>
 
 
+
+          {/* 财经新闻 - 科技感设计 */}
+          {news.length > 0 && (
+            <Card className="glass-card mb-12">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
+                  <div className="h-8 w-1 bg-gradient-to-b from-primary to-purple-500 rounded-full"></div>
+                  <span>财经资讯</span>
+                  <Newspaper className="h-6 w-6 text-primary" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {news.map((item) => (
+                    <div key={item.id} className="glass-card p-6 hover:glow-border transition-all duration-300 group cursor-pointer">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
+                            {item.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {item.summary}
+                          </p>
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <span>{item.source}</span>
+                            <span>•</span>
+                            <span>{new Date(item.publish_time).toLocaleString('zh-CN', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                            <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30 text-xs">
+                              {item.category}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="ml-4 flex items-center">
+                          {item.importance_level >= 4 && (
+                            <Badge variant="destructive" className="text-xs">
+                              重要
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 股票列表 - 科技感设计 */}
           <Card className="glass-card">
