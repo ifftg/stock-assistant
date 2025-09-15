@@ -76,9 +76,9 @@ function getMarketName(marketCode: string): string {
 }
 
 // 从东方财富获取股票列表
-async function fetchStockListFromEastmoney(pageSize: number = 100): Promise<any[]> {
+async function fetchStockListFromEastmoney(pageSize: number = 100, pageNumber: number = 1): Promise<any[]> {
   try {
-    const url = buildEastmoneyUrl(EASTMONEY_CONFIG.STOCK_LIST, { pz: pageSize })
+    const url = buildEastmoneyUrl(EASTMONEY_CONFIG.STOCK_LIST, { pz: pageSize, pn: pageNumber })
     
     const response = await fetch(url, {
       headers: {
@@ -197,16 +197,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // 获取请求参数
-    const { action, ticker, page_size = 100, days = 30 } = await req.json()
+    const { action, ticker, page_size = 100, page_number = 1, days = 30 } = await req.json()
 
     let result: any = {}
 
     switch (action) {
       case 'fetch_stock_list':
         // 获取股票列表并更新数据库
-        console.log(`开始获取股票列表，页面大小: ${page_size}`)
-        
-        const stocks = await fetchStockListFromEastmoney(page_size)
+        console.log(`开始获取股票列表，页面大小: ${page_size}，页码: ${page_number}`)
+
+        const stocks = await fetchStockListFromEastmoney(page_size, page_number)
         console.log(`从东方财富获取到 ${stocks.length} 只股票数据`)
 
         // 批量插入或更新股票基础信息（仅写入 stocks_info 表包含的列）
