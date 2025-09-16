@@ -35,6 +35,7 @@
     "scripts/**",
     "tests/**",
     "**/test-*.ts",
-    "supabase-edge-functions/**"
+    "supabase-edge-functions/**",
+    "supabase/functions/**"
   ]
 }
