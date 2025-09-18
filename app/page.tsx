@@ -133,8 +133,33 @@ export default function HomePage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await Promise.all([fetchStocks(), fetchIndices(), fetchNews()])
-      setLoading(false)
+      setError(null)
+
+      try {
+        // 先检查健康状态
+        const healthResponse = await fetch('/api/health')
+        const healthResult = await healthResponse.json()
+        console.log('服务健康检查:', healthResult)
+
+        // 并行加载数据，但不让单个失败影响整体
+        const results = await Promise.allSettled([
+          fetchStocks(),
+          fetchIndices(),
+          fetchNews()
+        ])
+
+        // 检查是否有失败的请求
+        const failures = results.filter(r => r.status === 'rejected')
+        if (failures.length > 0) {
+          console.warn('部分数据加载失败:', failures)
+        }
+
+      } catch (err) {
+        console.error('数据加载失败:', err)
+        setError('服务暂时不可用，请稍后重试')
+      } finally {
+        setLoading(false)
+      }
     }
 
     loadData()
