@@ -201,8 +201,8 @@ async function callGeminiAPI(prompt: string, apiKey: string): Promise<string> {
     } else {
       throw new Error('Gemini API返回格式异常')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('调用Gemini API失败:', error)
-    return `AI分析暂时不可用，请稍后重试。错误信息：${error.message}`
+    return `AI分析暂时不可用，请稍后重试。错误信息：${error?.message || String(error)}`
   }
 }
