@@ -54,66 +54,83 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">注册</h1>
-        <form onSubmit={onSubmit} className="space-y-4">
+    <div className="min-h-screen relative">
+      {/* 粒子流背景 */}
+      <div className="particle-background"></div>
+
+      <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
+        <div className="w-full max-w-md glass-card p-8">
+          <h1 className="text-3xl font-bold text-white mb-8 text-center">
+            注册智能股票分析平台
+          </h1>
+        <form onSubmit={onSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-300 text-sm mb-2">邮箱</label>
+            <label className="block text-gray-300 text-sm mb-2 font-medium">邮箱地址</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-              placeholder="you@example.com"
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+              placeholder="请输入您的邮箱"
               required
             />
           </div>
           <div>
-            <label className="block text-gray-300 text-sm mb-2">密码（至少6位）</label>
+            <label className="block text-gray-300 text-sm mb-2 font-medium">密码（至少6位）</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-12 text-white focus:outline-none focus:border-blue-400"
-                placeholder="••••••••"
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                placeholder="请输入密码"
                 required
                 minLength={6}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-gray-300 text-sm mb-2">确认密码</label>
+            <label className="block text-gray-300 text-sm mb-2 font-medium">确认密码</label>
             <input
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-400"
-              placeholder="••••••••"
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+              placeholder="请再次输入密码"
               required
               minLength={6}
             />
           </div>
-          {error && <div className="text-sm text-red-400">{error}</div>}
-          {info && <div className="text-sm text-green-400">{info}</div>}
+          {error && (
+            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+              {error}
+            </div>
+          )}
+          {info && (
+            <div className="text-sm text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+              {info}
+            </div>
+          )}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white rounded-xl px-4 py-3 transition"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl px-4 py-3 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             {loading ? "注册中..." : "注册"}
           </button>
         </form>
-        <div className="text-center mt-4 text-gray-300 text-sm">
-          已有账号？<Link href="/login" className="text-blue-400 hover:underline ml-1">去登录</Link>
+        <div className="text-center mt-6 text-gray-300 text-sm">
+          已有账号？
+          <Link href="/login" className="text-primary hover:text-primary/80 hover:underline ml-1 font-medium">
+            立即登录
+          </Link>
         </div>
       </div>
     </div>

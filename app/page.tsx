@@ -97,16 +97,35 @@ export default function HomePage() {
   // 获取财经新闻数据
   const fetchNews = async () => {
     try {
-      const response = await fetch('/api/news?limit=5')
-      const result = await response.json()
+      // 优先尝试获取实时新闻
+      let response = await fetch('/api/news/realtime?limit=5')
+      let result = await response.json()
 
-      if (result.success) {
+      if (result.success && result.data.length > 0) {
         setNews(result.data)
       } else {
-        console.error('获取新闻失败:', result.error)
+        // 如果实时新闻获取失败，回退到数据库新闻
+        response = await fetch('/api/news?limit=5')
+        result = await response.json()
+
+        if (result.success) {
+          setNews(result.data)
+        } else {
+          console.error('获取新闻失败:', result.error)
+        }
       }
     } catch (err) {
       console.error('获取新闻失败:', err)
+      // 尝试从数据库获取备用新闻
+      try {
+        const response = await fetch('/api/news?limit=5')
+        const result = await response.json()
+        if (result.success) {
+          setNews(result.data)
+        }
+      } catch (backupErr) {
+        console.error('备用新闻获取也失败:', backupErr)
+      }
     }
   }
 

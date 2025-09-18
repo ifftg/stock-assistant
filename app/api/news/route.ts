@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-// 直接从 Supabase news 表读取最新新闻
+// 直接从 Supabase financial_news 表读取最新新闻
 async function fetchLatestNewsFromDB(limit: number = 10, category?: string | null) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -11,7 +11,7 @@ async function fetchLatestNewsFromDB(limit: number = 10, category?: string | nul
 
   const supabase = createClient(supabaseUrl, supabaseKey)
   let q = supabase
-    .from('news')
+    .from('financial_news')
     .select('*')
     .order('publish_time', { ascending: false })
     .limit(limit)

@@ -28,8 +28,7 @@ async function getStocksWithCriteria(criteria: any, limit: number = 200) {
           turnover,
           pe_ratio,
           pb_ratio,
-          market_cap,
-          prev_close
+          market_cap
         )
       `)
       .order('trade_date', { foreignTable: 'stocks_daily', ascending: false })
@@ -51,32 +50,32 @@ async function getStocksWithCriteria(criteria: any, limit: number = 200) {
 
 // 策略筛选函数映射
 const strategyScreeners = {
-  // 1. 经典价值策略: PE < 15, PB < 1.5, 市值 > 200亿
+  // 1. 经典价值策略: PE < 30, PB < 3, 市值 > 50亿 (放宽条件)
   value_strategy: async () => {
-    const { data: stocks, error } = await getStocksWithCriteria({}, 200)
+    const { data: stocks, error } = await getStocksWithCriteria({}, 500)
     if (error) return { data: null, error }
 
     const filtered = (stocks || []).filter((stock: any) => {
       const daily = stock.stocks_daily?.[0]
       return daily &&
-        Number(daily.pe_ratio) > 0 && Number(daily.pe_ratio) < 15 &&
-        Number(daily.pb_ratio) > 0 && Number(daily.pb_ratio) < 1.5 &&
-        Number(daily.market_cap) > 20000000000
+        daily.pe_ratio && Number(daily.pe_ratio) > 0 && Number(daily.pe_ratio) < 30 &&
+        daily.pb_ratio && Number(daily.pb_ratio) > 0 && Number(daily.pb_ratio) < 3 &&
+        daily.market_cap && Number(daily.market_cap) > 5000000000
     })
 
     return { data: filtered.slice(0, 50), error: null }
   },
 
-  // 2. 放量上涨策略: 成交量/5日均量≥2，成交额≥2亿
+  // 2. 放量上涨策略: 成交量 > 50万，成交额 > 5000万 (放宽条件)
   volume_surge: async () => {
-    const { data: stocks, error } = await getStocksWithCriteria({}, 200)
+    const { data: stocks, error } = await getStocksWithCriteria({}, 500)
     if (error) return { data: null, error }
 
     const filtered = (stocks || []).filter((stock: any) => {
       const d = stock.stocks_daily?.[0]
       if (!d) return false
-      const volOk = Number(d.volume) > 1_000_000
-      const amountOk = Number(d.turnover) > 200_000_000
+      const volOk = d.volume && Number(d.volume) > 500_000
+      const amountOk = d.turnover && Number(d.turnover) > 50_000_000
       const riseOk = d.close_price && d.open_price && Number(d.close_price) > Number(d.open_price)
       return volOk && amountOk && riseOk
     })
@@ -225,8 +224,10 @@ export async function GET(request: NextRequest) {
     // 处理数据格式
     const processedStocks = stocks?.map(stock => {
       const dailyData = stock.stocks_daily[0] // 获取最新的日线数据
-      const ref = (dailyData && dailyData.prev_close && dailyData.prev_close > 0) ? dailyData.prev_close : dailyData?.open_price
-      const changePercent = dailyData && ref ? ((dailyData.close_price - ref) / ref * 100) : 0
+      // 简化涨跌幅计算，使用开盘价作为参考
+      const ref = dailyData?.open_price || dailyData?.close_price
+      const changePercent = dailyData && ref && ref > 0 ?
+        ((dailyData.close_price - ref) / ref * 100) : 0
 
       return {
         ticker: stock.ticker,
@@ -234,7 +235,7 @@ export async function GET(request: NextRequest) {
         market: stock.market,
         industry: stock.industry,
         currentPrice: dailyData?.close_price || 0,
-        changePercent: changePercent,
+        changePercent: Number(changePercent.toFixed(2)),
         volume: dailyData?.volume || 0,
         turnover: dailyData?.turnover || 0,
         marketCap: dailyData?.market_cap || 0,

@@ -52,27 +52,27 @@ export default function Navigation() {
   }
 
   return (
-    <>
-      {/* 右上角登录/注册按钮 */}
-      <div className="absolute top-4 right-4 z-50">
+    <div className="relative w-full">
+      {/* 右上角登录/注册按钮 - 固定在导航栏右侧 */}
+      <div className="absolute top-0 right-0 z-[60] flex items-center space-x-3">
         {loading ? (
           <div className="animate-pulse bg-white/10 rounded-xl px-4 py-2 w-20 h-10"></div>
         ) : user ? (
           <div className="flex items-center space-x-3">
-            <span className="text-white text-sm">欢迎，{user.email}</span>
+            <span className="text-white text-sm hidden md:inline">欢迎，{user.email}</span>
             <button
               onClick={signOut}
-              className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 transition"
+              className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 transition-all duration-200"
             >
               退出
             </button>
           </div>
         ) : (
           <div className="flex items-center space-x-3">
-            <Link href="/login" className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition">
+            <Link href="/login" className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all duration-200">
               登录
             </Link>
-            <Link href="/signup" className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">
+            <Link href="/signup" className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg">
               注册
             </Link>
           </div>
@@ -80,7 +80,7 @@ export default function Navigation() {
       </div>
 
       {/* 桌面端五板块大导航 - 整行占满，超大按钮 */}
-      <nav className="hidden md:block w-full max-w-7xl mx-auto">
+      <nav className="hidden md:block w-full max-w-7xl mx-auto pr-80">
         <div className="grid grid-cols-5 gap-4 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
           {navigationItems.map((item) => (
             <Link
@@ -121,7 +121,7 @@ export default function Navigation() {
 
       {/* 移动端导航按钮 */}
       <button
-        className="md:hidden fixed top-4 right-4 z-50 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20"
+        className="md:hidden fixed top-4 left-4 z-50 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         <div className="w-6 h-6 flex flex-col justify-center space-y-1">
