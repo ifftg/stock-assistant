@@ -80,7 +80,7 @@ export default function HomePage() {
   // 获取市场指数数据
   const fetchIndices = async () => {
     try {
-      const response = await fetch('/api/market-indices?includeTestData=false')
+      const response = await fetch('/api/realtime/market-indices')
       const result = await response.json()
 
       if (result.success) {
@@ -120,6 +120,16 @@ export default function HomePage() {
 
     loadData()
   }, [])
+  // 指数和新闻定时刷新（指数每60秒，新闻每5分钟）
+  useEffect(() => {
+    const idxTimer = setInterval(() => { fetchIndices() }, 60_000)
+    const newsTimer = setInterval(() => { fetchNews() }, 300_000)
+    return () => {
+      clearInterval(idxTimer)
+      clearInterval(newsTimer)
+    }
+  }, [])
+
 
   // 刷新数据
   const handleRefresh = async () => {
@@ -291,7 +301,7 @@ export default function HomePage() {
               <CardContent>
                 <div className="space-y-4">
                   {news.map((item) => (
-                    <div key={item.id} className="glass-card p-6 hover:glow-border transition-all duration-300 group cursor-pointer">
+                    <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block glass-card p-6 hover:glow-border transition-all duration-300 group">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
@@ -323,7 +333,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               </CardContent>
@@ -365,46 +375,48 @@ export default function HomePage() {
                   </div>
                 ) : (
                   filteredStocks.map((stock) => (
-                    <div key={stock.ticker} className="glass-card p-6 hover:glow-border transition-all duration-300 group cursor-pointer">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6">
-                          <div className="space-y-1">
-                            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {stock.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground font-mono">{stock.ticker}</p>
-                            {stock.isTestData && (
-                              <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30 text-xs">
-                                演示数据
-                              </Badge>
-                            )}
+                    <Link key={stock.ticker} href={`/stocks/${stock.ticker}`} className="block">
+                      <div className="glass-card p-6 hover:glow-border transition-all duration-300 group cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-6">
+                            <div className="space-y-1">
+                              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                                {stock.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground font-mono">{stock.ticker}</p>
+                              {stock.isTestData && (
+                                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30 text-xs">
+                                  演示数据
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right space-y-2">
+                            <p className="text-2xl font-bold tech-number">
+                              ¥{stock.price.toFixed(2)}
+                            </p>
+                            <div className={`flex items-center justify-end space-x-2 ${
+                              stock.changePercent >= 0 ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              {stock.changePercent >= 0 ? (
+                                <TrendingUp className="h-5 w-5" />
+                              ) : (
+                                <TrendingDown className="h-5 w-5" />
+                              )}
+                              <span className="text-lg font-bold">
+                                {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              成交量: <span className="font-mono">{formatNumber(stock.volume)}</span>
+                            </p>
                           </div>
                         </div>
-                        <div className="text-right space-y-2">
-                          <p className="text-2xl font-bold tech-number">
-                            ¥{stock.price.toFixed(2)}
-                          </p>
-                          <div className={`flex items-center justify-end space-x-2 ${
-                            stock.changePercent >= 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {stock.changePercent >= 0 ? (
-                              <TrendingUp className="h-5 w-5" />
-                            ) : (
-                              <TrendingDown className="h-5 w-5" />
-                            )}
-                            <span className="text-lg font-bold">
-                              {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            成交量: <span className="font-mono">{formatNumber(stock.volume)}</span>
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* 数据流动效果 */}
-                      <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
-                    </div>
+                        {/* 数据流动效果 */}
+                        <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+                      </div>
+                    </Link>
                   ))
                 )}
               </div>

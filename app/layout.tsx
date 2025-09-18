@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           {/* 全局导航栏 - 五板块大导航 */}
-          <header className="fixed top-0 left-0 right-0 z-40 p-4">
+          <header className="fixed top-0 left-0 right-0 z-50 p-4">
             <div className="container mx-auto">
               <Navigation />
             </div>
