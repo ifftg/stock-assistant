@@ -20,60 +20,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // 获取初始会话
     const getInitialSession = async () => {
-      const supabase = getSupabaseBrowser()
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false)
+      try {
+        const supabase = getSupabaseBrowser()
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
+      } catch (error) {
+        console.error('获取会话失败:', error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
 
     getInitialSession()
 
     // 监听认证状态变化
-    const supabase = getSupabaseBrowser()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
+    try {
+      const supabase = getSupabaseBrowser()
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setUser(session?.user ?? null)
+          setLoading(false)
+        }
+      )
 
-    return () => subscription.unsubscribe()
+      return () => subscription.unsubscribe()
+    } catch (error) {
+      console.error('设置认证监听失败:', error)
+      setLoading(false)
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const supabase = getSupabaseBrowser()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    try {
+      const supabase = getSupabaseBrowser()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    } catch (error: any) {
+      console.error('登录失败:', error)
+      return { error }
+    }
   }
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const supabase = getSupabaseBrowser()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const supabase = getSupabaseBrowser()
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
         },
-      },
-    })
-    return { error }
+      })
+      return { error }
+    } catch (error: any) {
+      console.error('注册失败:', error)
+      return { error }
+    }
   }
 
   const signOut = async () => {
-    const supabase = getSupabaseBrowser()
-    await supabase.auth.signOut()
+    try {
+      const supabase = getSupabaseBrowser()
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('登出失败:', error)
+    }
   }
 
   const resetPassword = async (email: string) => {
-    const supabase = getSupabaseBrowser()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    return { error }
+    try {
+      const supabase = getSupabaseBrowser()
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      return { error }
+    } catch (error: any) {
+      console.error('重置密码失败:', error)
+      return { error }
+    }
   }
 
   const value = {
