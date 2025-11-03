@@ -48,10 +48,15 @@ export async function GET(request: NextRequest) {
           pe_ratio,
           pb_ratio,
           market_cap,
+          prev_close,
           data_source,
           is_test_data
         )
       `)
+      // 确保嵌套的 stocks_daily 取到最新一条（按交易日倒序并限制为1行）
+      .order('trade_date', { foreignTable: 'stocks_daily', ascending: false })
+      .limit(1, { foreignTable: 'stocks_daily' })
+      // 主表按创建时间倒序，仅取前 N 条
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -73,8 +78,8 @@ export async function GET(request: NextRequest) {
     // 处理数据格式，计算涨跌幅
     const processedStocks = stocks?.map(stock => {
       const dailyData = stock.stocks_daily[0] // 获取最新的日线数据
-      const changePercent = dailyData ? 
-        ((dailyData.close_price - dailyData.open_price) / dailyData.open_price * 100) : 0
+      const ref = (dailyData && dailyData.prev_close && dailyData.prev_close > 0) ? dailyData.prev_close : dailyData?.open_price
+      const changePercent = dailyData && ref ? ((dailyData.close_price - ref) / ref * 100) : 0
 
       return {
         ticker: stock.ticker,

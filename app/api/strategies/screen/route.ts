@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// 通用的股票筛选函数（在函数内创建客户端，避免构建期执行）
-async function getStocksWithCriteria(criteria: any) {
+// 通用候选集获取（一次性联表 + 仅取最新一条日线）
+async function getStocksWithCriteria(criteria: any, limit: number = 200) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -10,41 +10,38 @@ async function getStocksWithCriteria(criteria: any) {
       return { data: null, error: new Error('Supabase环境变量未配置') }
     }
     const supabase = createClient(supabaseUrl, supabaseKey)
-    // 简化版：直接获取测试数据
-    const { data: stocks, error } = await supabase
+
+    let query = supabase
       .from('stocks_info')
       .select(`
         ticker,
         name,
         market,
-        industry
+        industry,
+        stocks_daily!inner(
+          trade_date,
+          open_price,
+          close_price,
+          high_price,
+          low_price,
+          volume,
+          turnover,
+          pe_ratio,
+          pb_ratio,
+          market_cap
+        )
       `)
-      .limit(20)
+      .order('trade_date', { foreignTable: 'stocks_daily', ascending: false })
+      .limit(1, { foreignTable: 'stocks_daily' })
+      .limit(limit)
 
+    const { data, error } = await query
     if (error) {
-      console.error('获取股票信息失败:', error)
+      console.error('获取候选股票失败:', error)
       return { data: null, error }
     }
 
-    // 为每个股票获取最新的日线数据
-    const stocksWithData = []
-    for (const stock of stocks || []) {
-      const { data: dailyData, error: dailyError } = await supabase
-        .from('stocks_daily')
-        .select('*')
-        .eq('ticker', stock.ticker)
-        .order('trade_date', { ascending: false })
-        .limit(1)
-
-      if (!dailyError && dailyData && dailyData.length > 0) {
-        stocksWithData.push({
-          ...stock,
-          stocks_daily: dailyData
-        })
-      }
-    }
-
-    return { data: stocksWithData, error: null }
+    return { data: data || [], error: null }
   } catch (err) {
     console.error('getStocksWithCriteria错误:', err)
     return { data: null, error: err }
@@ -53,39 +50,37 @@ async function getStocksWithCriteria(criteria: any) {
 
 // 策略筛选函数映射
 const strategyScreeners = {
-  // 1. 经典价值策略: PE < 15, PB < 1.5, 市值 > 200亿
+  // 1. 经典价值策略: PE < 30, PB < 3, 市值 > 50亿 (放宽条件)
   value_strategy: async () => {
-    const { data: stocks, error } = await getStocksWithCriteria({})
+    const { data: stocks, error } = await getStocksWithCriteria({}, 500)
     if (error) return { data: null, error }
 
-    // 应用价值策略筛选条件
-    const filtered = stocks?.filter(stock => {
-      const daily = stock.stocks_daily[0]
+    const filtered = (stocks || []).filter((stock: any) => {
+      const daily = stock.stocks_daily?.[0]
       return daily &&
-             daily.pe_ratio && daily.pe_ratio > 0 && daily.pe_ratio < 15 &&
-             daily.pb_ratio && daily.pb_ratio > 0 && daily.pb_ratio < 1.5 &&
-             daily.market_cap && daily.market_cap > 20000000000
-    }) || []
+        daily.pe_ratio && Number(daily.pe_ratio) > 0 && Number(daily.pe_ratio) < 30 &&
+        daily.pb_ratio && Number(daily.pb_ratio) > 0 && Number(daily.pb_ratio) < 3 &&
+        daily.market_cap && Number(daily.market_cap) > 5000000000
+    })
 
-    return { data: filtered.slice(0, 30), error: null }
+    return { data: filtered.slice(0, 50), error: null }
   },
 
-  // 2. 放量上涨策略: 成交量/5日均量≥2，成交额≥2亿
+  // 2. 放量上涨策略: 成交量 > 50万，成交额 > 5000万 (放宽条件)
   volume_surge: async () => {
-    const { data: stocks, error } = await getStocksWithCriteria({})
+    const { data: stocks, error } = await getStocksWithCriteria({}, 500)
     if (error) return { data: null, error }
 
-    // 应用放量上涨策略筛选条件
-    const filtered = stocks?.filter(stock => {
-      const daily = stock.stocks_daily[0]
-      return daily &&
-             daily.volume && daily.volume > 1000000 &&
-             daily.turnover && daily.turnover > 200000000 &&
-             daily.close_price && daily.open_price &&
-             ((daily.close_price - daily.open_price) / daily.open_price) > 0
-    }) || []
+    const filtered = (stocks || []).filter((stock: any) => {
+      const d = stock.stocks_daily?.[0]
+      if (!d) return false
+      const volOk = d.volume && Number(d.volume) > 500_000
+      const amountOk = d.turnover && Number(d.turnover) > 50_000_000
+      const riseOk = d.close_price && d.open_price && Number(d.close_price) > Number(d.open_price)
+      return volOk && amountOk && riseOk
+    })
 
-    return { data: filtered.slice(0, 30), error: null }
+    return { data: filtered.slice(0, 50), error: null }
   },
 
   // 3. 均线多头策略: 需要计算均线，暂时简化
@@ -229,8 +224,10 @@ export async function GET(request: NextRequest) {
     // 处理数据格式
     const processedStocks = stocks?.map(stock => {
       const dailyData = stock.stocks_daily[0] // 获取最新的日线数据
-      const changePercent = dailyData && dailyData.close_price && dailyData.open_price ? 
-        ((dailyData.close_price - dailyData.open_price) / dailyData.open_price * 100) : 0
+      // 简化涨跌幅计算，使用开盘价作为参考
+      const ref = dailyData?.open_price || dailyData?.close_price
+      const changePercent = dailyData && ref && ref > 0 ?
+        ((dailyData.close_price - ref) / ref * 100) : 0
 
       return {
         ticker: stock.ticker,
@@ -238,7 +235,7 @@ export async function GET(request: NextRequest) {
         market: stock.market,
         industry: stock.industry,
         currentPrice: dailyData?.close_price || 0,
-        changePercent: changePercent,
+        changePercent: Number(changePercent.toFixed(2)),
         volume: dailyData?.volume || 0,
         turnover: dailyData?.turnover || 0,
         marketCap: dailyData?.market_cap || 0,

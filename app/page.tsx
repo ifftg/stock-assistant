@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { TrendingUp, TrendingDown, Search, Star, BarChart3, Newspaper, Brain, AlertTriangle, RefreshCw, Activity, Zap, Target, Briefcase } from 'lucide-react'
 
+import Link from 'next/link'
 // 数据类型定义
 interface Stock {
   ticker: string
@@ -37,9 +38,22 @@ interface MarketIndex {
   updateTime: string
 }
 
+interface NewsItem {
+  id: number
+  title: string
+  summary: string
+  source: string
+  url: string
+  publish_time: string
+  category: string
+  importance_level: number
+  created_at: string
+}
+
 export default function HomePage() {
   const [stocks, setStocks] = useState<Stock[]>([])
   const [indices, setIndices] = useState<MarketIndex[]>([])
+  const [news, setNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasTestData, setHasTestData] = useState(false)
@@ -48,9 +62,9 @@ export default function HomePage() {
   // 获取股票数据
   const fetchStocks = async () => {
     try {
-      const response = await fetch('/api/stocks?includeTestData=true&limit=10')
+      const response = await fetch('/api/stocks?includeTestData=false&limit=10')
       const result = await response.json()
-      
+
       if (result.success) {
         setStocks(result.data)
         setHasTestData(result.meta.hasTestData)
@@ -66,9 +80,9 @@ export default function HomePage() {
   // 获取市场指数数据
   const fetchIndices = async () => {
     try {
-      const response = await fetch('/api/market-indices?includeTestData=true')
+      const response = await fetch('/api/realtime/market-indices')
       const result = await response.json()
-      
+
       if (result.success) {
         setIndices(result.data)
       } else {
@@ -80,26 +94,96 @@ export default function HomePage() {
     }
   }
 
+  // 获取财经新闻数据
+  const fetchNews = async () => {
+    try {
+      // 优先尝试获取实时新闻
+      let response = await fetch('/api/news/realtime?limit=5')
+      let result = await response.json()
+
+      if (result.success && result.data.length > 0) {
+        setNews(result.data)
+      } else {
+        // 如果实时新闻获取失败，回退到数据库新闻
+        response = await fetch('/api/news?limit=5')
+        result = await response.json()
+
+        if (result.success) {
+          setNews(result.data)
+        } else {
+          console.error('获取新闻失败:', result.error)
+        }
+      }
+    } catch (err) {
+      console.error('获取新闻失败:', err)
+      // 尝试从数据库获取备用新闻
+      try {
+        const response = await fetch('/api/news?limit=5')
+        const result = await response.json()
+        if (result.success) {
+          setNews(result.data)
+        }
+      } catch (backupErr) {
+        console.error('备用新闻获取也失败:', backupErr)
+      }
+    }
+  }
+
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await Promise.all([fetchStocks(), fetchIndices()])
-      setLoading(false)
+      setError(null)
+
+      try {
+        // 先检查健康状态
+        const healthResponse = await fetch('/api/health')
+        const healthResult = await healthResponse.json()
+        console.log('服务健康检查:', healthResult)
+
+        // 并行加载数据，但不让单个失败影响整体
+        const results = await Promise.allSettled([
+          fetchStocks(),
+          fetchIndices(),
+          fetchNews()
+        ])
+
+        // 检查是否有失败的请求
+        const failures = results.filter(r => r.status === 'rejected')
+        if (failures.length > 0) {
+          console.warn('部分数据加载失败:', failures)
+        }
+
+      } catch (err) {
+        console.error('数据加载失败:', err)
+        setError('服务暂时不可用，请稍后重试')
+      } finally {
+        setLoading(false)
+      }
     }
-    
+
     loadData()
   }, [])
+  // 指数和新闻定时刷新（指数每60秒，新闻每5分钟）
+  useEffect(() => {
+    const idxTimer = setInterval(() => { fetchIndices() }, 60_000)
+    const newsTimer = setInterval(() => { fetchNews() }, 300_000)
+    return () => {
+      clearInterval(idxTimer)
+      clearInterval(newsTimer)
+    }
+  }, [])
+
 
   // 刷新数据
   const handleRefresh = async () => {
     setLoading(true)
-    await Promise.all([fetchStocks(), fetchIndices()])
+    await Promise.all([fetchStocks(), fetchIndices(), fetchNews()])
     setLoading(false)
   }
 
   // 过滤股票
-  const filteredStocks = stocks.filter(stock => 
+  const filteredStocks = stocks.filter(stock =>
     stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     stock.ticker.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -159,6 +243,9 @@ export default function HomePage() {
                 <Zap className="h-4 w-4 text-primary" />
                 <span>毫秒响应</span>
               </div>
+
+
+
             </div>
           </div>
 
@@ -245,6 +332,58 @@ export default function HomePage() {
 
 
 
+          {/* 财经新闻 - 科技感设计 */}
+          {news.length > 0 && (
+            <Card className="glass-card mb-12">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-2xl font-bold text-foreground flex items-center space-x-3">
+                  <div className="h-8 w-1 bg-gradient-to-b from-primary to-purple-500 rounded-full"></div>
+                  <span>财经资讯</span>
+                  <Newspaper className="h-6 w-6 text-primary" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {news.map((item) => (
+                    <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block glass-card p-6 hover:glow-border transition-all duration-300 group">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
+                            {item.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {item.summary}
+                          </p>
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <span>{item.source}</span>
+                            <span>•</span>
+                            <span>{new Date(item.publish_time).toLocaleString('zh-CN', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                            <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30 text-xs">
+                              {item.category}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="ml-4 flex items-center">
+                          {item.importance_level >= 4 && (
+                            <Badge variant="destructive" className="text-xs">
+                              重要
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+                    </a>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* 股票列表 - 科技感设计 */}
           <Card className="glass-card">
             <CardHeader className="pb-6">
@@ -280,46 +419,48 @@ export default function HomePage() {
                   </div>
                 ) : (
                   filteredStocks.map((stock) => (
-                    <div key={stock.ticker} className="glass-card p-6 hover:glow-border transition-all duration-300 group cursor-pointer">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6">
-                          <div className="space-y-1">
-                            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {stock.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground font-mono">{stock.ticker}</p>
-                            {stock.isTestData && (
-                              <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30 text-xs">
-                                演示数据
-                              </Badge>
-                            )}
+                    <Link key={stock.ticker} href={`/stocks/${stock.ticker}`} className="block">
+                      <div className="glass-card p-6 hover:glow-border transition-all duration-300 group cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-6">
+                            <div className="space-y-1">
+                              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                                {stock.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground font-mono">{stock.ticker}</p>
+                              {stock.isTestData && (
+                                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30 text-xs">
+                                  演示数据
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right space-y-2">
+                            <p className="text-2xl font-bold tech-number">
+                              ¥{stock.price.toFixed(2)}
+                            </p>
+                            <div className={`flex items-center justify-end space-x-2 ${
+                              stock.changePercent >= 0 ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              {stock.changePercent >= 0 ? (
+                                <TrendingUp className="h-5 w-5" />
+                              ) : (
+                                <TrendingDown className="h-5 w-5" />
+                              )}
+                              <span className="text-lg font-bold">
+                                {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              成交量: <span className="font-mono">{formatNumber(stock.volume)}</span>
+                            </p>
                           </div>
                         </div>
-                        <div className="text-right space-y-2">
-                          <p className="text-2xl font-bold tech-number">
-                            ¥{stock.price.toFixed(2)}
-                          </p>
-                          <div className={`flex items-center justify-end space-x-2 ${
-                            stock.changePercent >= 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {stock.changePercent >= 0 ? (
-                              <TrendingUp className="h-5 w-5" />
-                            ) : (
-                              <TrendingDown className="h-5 w-5" />
-                            )}
-                            <span className="text-lg font-bold">
-                              {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            成交量: <span className="font-mono">{formatNumber(stock.volume)}</span>
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* 数据流动效果 */}
-                      <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
-                    </div>
+                        {/* 数据流动效果 */}
+                        <div className="data-flow mt-4 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+                      </div>
+                    </Link>
                   ))
                 )}
               </div>

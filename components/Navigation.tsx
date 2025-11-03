@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navigationItems = [
   {
@@ -19,28 +20,16 @@ const navigationItems = [
   },
   {
     id: 'analysis',
-    name: '个股AI分析',
+    name: 'AI分析',
     href: '/analysis',
-    description: 'AI智能分析'
-  },
-  {
-    id: 'quant',
-    name: '量化工作台',
-    href: '/quant',
-    description: '专业回测平台'
-  },
-  {
-    id: 'trading',
-    name: '交易系统',
-    href: '/trading',
-    description: '未开放',
-    disabled: true
+    description: '智能股票分析'
   }
 ]
 
 export default function Navigation() {
   const pathname = usePathname()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { user, loading, signOut } = useAuth()
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -50,121 +39,103 @@ export default function Navigation() {
   }
 
   return (
-    <>
-      {/* 桌面端五板块大导航 - 整行占满，超大按钮 */}
-      <nav className="hidden md:block w-full max-w-7xl mx-auto">
-        <div className="grid grid-cols-5 gap-4 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.disabled ? '#' : item.href}
-              className={`
-                relative group block text-center p-8 rounded-2xl font-bold text-lg transition-all duration-300 transform
-                ${item.disabled
-                  ? 'text-gray-500 cursor-not-allowed opacity-50 bg-gray-800/20'
-                  : isActive(item.href)
-                    ? 'bg-gradient-to-br from-blue-500 via-purple-600 to-blue-700 text-white shadow-2xl shadow-blue-500/30 scale-105 glow-border'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10 hover:scale-102 hover:shadow-lg hover:shadow-blue-500/20'
-                }
-              `}
-              onClick={(e) => item.disabled && e.preventDefault()}
+    <div className="relative w-full">
+      {/* 右上角登录/注册按钮 - 固定在导航栏右侧 */}
+      <div className="absolute top-0 right-0 z-[60] flex items-center space-x-3">
+        {loading ? (
+          <div className="animate-pulse bg-white/10 rounded-xl px-4 py-2 w-20 h-10"></div>
+        ) : user ? (
+          <div className="flex items-center space-x-3">
+            <span className="text-white text-sm hidden md:inline">欢迎，{user.email}</span>
+            <button
+              onClick={signOut}
+              className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 transition-all duration-200"
             >
-              <div className="space-y-3">
-                <div className="text-2xl font-bold">{item.name}</div>
-                <div className="text-sm opacity-80 font-normal">{item.description}</div>
-              </div>
-
-              {/* 激活状态发光效果 */}
-              {isActive(item.href) && (
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/20 to-purple-600/20 blur-xl -z-10"></div>
-              )}
-
-              {/* 悬停提示 */}
-              {!isActive(item.href) && !item.disabled && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 px-4 py-2 bg-black/90 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                  {item.description}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90"></div>
-                </div>
-              )}
+              退出
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2">
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all duration-200"
+            >
+              登录
             </Link>
-          ))}
-        </div>
-      </nav>
+            <Link
+              href="/signup"
+              className="px-4 py-2 rounded-xl bg-primary border border-primary/30 text-white hover:bg-primary/80 transition-all duration-200"
+            >
+              注册
+            </Link>
+          </div>
+        )}
+      </div>
 
-      {/* 移动端导航按钮 */}
-      <button
-        className="md:hidden fixed top-4 right-4 z-50 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        <div className="w-6 h-6 flex flex-col justify-center space-y-1">
-          <div className={`w-full h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-1' : ''}`}></div>
-          <div className={`w-full h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}></div>
-          <div className={`w-full h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-1' : ''}`}></div>
-        </div>
-      </button>
+      {/* 主导航栏 */}
+      <nav className="glass-card border-0 border-b border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="text-xl font-bold text-white hidden sm:inline">智能股票分析</span>
+            </Link>
 
-      {/* 移动端导航菜单 */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm">
-          <div className="absolute top-20 left-4 right-4 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-            <div className="space-y-2">
+            {/* 桌面端导航菜单 */}
+            <div className="hidden md:flex items-center space-x-1 mr-32">
               {navigationItems.map((item) => (
                 <Link
                   key={item.id}
-                  href={item.disabled ? '#' : item.href}
-                  className={`
-                    block px-4 py-3 rounded-xl font-semibold transition-all duration-300
-                    ${item.disabled 
-                      ? 'text-gray-500 cursor-not-allowed opacity-50' 
-                      : isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                        : 'text-gray-300 hover:text-white hover:bg-white/10'
-                    }
-                  `}
-                  onClick={(e) => {
-                    if (item.disabled) {
-                      e.preventDefault()
-                    } else {
-                      setIsMobileMenuOpen(false)
-                    }
-                  }}
+                  href={item.href}
+                  className={`px-4 py-2 rounded-xl transition-all duration-200 ${
+                    isActive(item.href)
+                      ? 'bg-primary text-white shadow-lg'
+                      : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div>
-                      <div>{item.name}</div>
-                      <div className="text-sm opacity-70">{item.description}</div>
-                    </div>
-                  </div>
+                  {item.name}
                 </Link>
               ))}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* 底部移动端导航栏（备选方案） */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/10 backdrop-blur-md border-t border-white/20 px-2 py-2">
-        <div className="flex justify-around">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.disabled ? '#' : item.href}
-              className={`
-                flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-300
-                ${item.disabled 
-                  ? 'text-gray-500 cursor-not-allowed opacity-50' 
-                  : isActive(item.href)
-                    ? 'text-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                }
-              `}
-              onClick={(e) => item.disabled && e.preventDefault()}
+            {/* 移动端菜单按钮 */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
             >
-              <span className="text-xs">{item.name.replace('个股AI分析', 'AI分析').replace('量化工作台', '量化').replace('交易系统', '交易')}</span>
-            </Link>
-          ))}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* 移动端下拉菜单 */}
+          {isMenuOpen && (
+            <div className="md:hidden py-4 border-t border-white/10">
+              <div className="space-y-2">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`block px-4 py-3 rounded-xl transition-all duration-200 ${
+                      isActive(item.href)
+                        ? 'bg-primary text-white'
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-sm opacity-70">{item.description}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    </>
+      </nav>
+    </div>
   )
 }

@@ -1,0 +1,25 @@
+# Edge Functions (Deno runtime, not compatible with Vercel Node.js build)
+ai-analysis-edge-function.ts
+stock-data-edge-function.ts
+stock-data-fetcher-edge-function.ts
+simple-ai-analysis.ts
+supabase/functions/**
+
+# Research and test files
+eastmoney-api-research.ts
+test-*.js
+test-*.ts
+scripts/call-edge*.js
+scripts/test-*.js
+
+# Documentation
+deploy-edge-functions.md
+docs/work-logs/**
+
+# Database scripts
+database-setup*.sql
+scripts/data-management.sql
+
+# Project documentation
+新版PRD：智能股票分析平台（可实现版）.md
+README-new.md

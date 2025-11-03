@@ -1,10 +1,33 @@
-// Supabase客户端配置
-import { createClient } from '@supabase/supabase-js'
+// Supabase客户端配置（延迟创建，避免构建期读取 env 导致 Vercel 预渲染报错）
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+let browserClient: SupabaseClient | null = null
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export function getSupabaseBrowser(): SupabaseClient {
+  if (browserClient) return browserClient
+
+  // 在浏览器环境中，使用硬编码的配置（因为环境变量可能不可用）
+  if (typeof window !== 'undefined') {
+    const fallbackUrl = 'https://wvkrfaznogbruocaxfja.supabase.co'
+    const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2a3JmYXpub2dicnVvY2F4ZmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMjA5OTYsImV4cCI6MjA3MTc5Njk5Nn0.l2wZvz69a0TsGisqSQ19028hfL_ySk2-hJNmFrjRBzQ'
+    browserClient = createClient(fallbackUrl, fallbackKey)
+    return browserClient
+  }
+
+  // 服务端环境
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+
+  if (!url || !key) {
+    console.warn('Supabase环境变量未设置，使用默认配置')
+    const fallbackUrl = 'https://wvkrfaznogbruocaxfja.supabase.co'
+    const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2a3JmYXpub2dicnVvY2F4ZmphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMjA5OTYsImV4cCI6MjA3MTc5Njk5Nn0.l2wZvz69a0TsGisqSQ19028hfL_ySk2-hJNmFrjRBzQ'
+    browserClient = createClient(fallbackUrl, fallbackKey)
+    return browserClient
+  }
+  browserClient = createClient(url, key)
+  return browserClient
+}
 
 // 认证相关类型定义
 export interface User {

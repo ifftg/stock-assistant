@@ -26,9 +26,16 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": [
     "node_modules",
+    // Edge Functions & research/test scripts are not part of Next.js build
     "ai-analysis-edge-function.ts",
     "stock-data-edge-function.ts",
+    "stock-data-fetcher-edge-function.ts",
     "simple-ai-analysis.ts",
-    "supabase-edge-functions/**"
+    "eastmoney-api-research.ts",
+    "scripts/**",
+    "tests/**",
+    "**/test-*.ts",
+    "supabase-edge-functions/**",
+    "supabase/functions/**"
   ]
 }
